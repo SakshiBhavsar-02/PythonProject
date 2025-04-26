@@ -1,0 +1,285 @@
+---
+title: "UNICEF Report"
+# Global Maternal Health: Birth Rates, C-Sections & Healthcare Infrastructure
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+---
+
+# **An analysis of C-section rates, birth trends, and healthcare infrastructure across countries**
+
+The world map shows the birth rate per 1000 individuals land C-section rate for various nations.
+Countries with higher C-section rates (e.g., Brazil, China, USA) mirror higher medical interventions, often a result of private health care incentives or medical policy. Regions with lower C-section rates but high birth rates (e.g., some parts of Africa) may have limited medical access and thus greater maternal and infant mortality risks. The international disparity of the C-section rate indicates that access to health, cultural values and health policies have a deep impact on decisions in maternal care.
+
+```{python}	
+import geopandas as gpd
+import pandas as pd
+import plotly.express as px
+
+# Read shapefile
+world = gpd.read_file("ne_110m_admin_0_countries.shp")
+
+# Read the CSV you gave
+data = pd.read_csv("unicef_indicator_2_final_alpha3.csv")
+
+# Merge world shapefile with your data
+merged = world.merge(data, how="left", left_on="ISO_A3", right_on="Country Code")
+
+# Fill missing C Section %
+merged['C Section %'] = merged['C Section %'].fillna(0)
+
+# Create custom hover text
+def generate_hover_text(row):
+    if pd.notna(row['C Section %']):
+        return f"{row['Country']}<br>C Section %: {row['C Section %']:.1f}%"
+    else:
+        return f"{row['NAME']}"
+
+merged['hover_text'] = merged.apply(generate_hover_text, axis=1)
+
+# Convert to GeoJSON
+geojson = merged.__geo_interface__
+
+# NOW Create the choropleth properly
+fig = px.choropleth(
+    merged,
+    geojson=geojson,
+    locations="ISO_A3",
+    featureidkey="properties.ISO_A3",
+    color="C Section %",
+    hover_name="hover_text",
+    animation_frame="Year",  # 🎯 Adds year filter (slider + buttons)
+    color_continuous_scale="Blues",
+    range_color=(0, merged["C Section %"].max()),
+    title="World Map of C Section % Over Years",
+)
+
+# Lock map (no dragging, no zooming)
+fig.update_geos(
+    fitbounds="locations",
+    visible=False,
+    scope="world",
+    projection_type='equirectangular',
+    showland=True,
+    landcolor="lightgrey",
+    showcountries=True,
+    showcoastlines=True,
+    coastlinecolor="black",
+)
+
+fig.update_layout(
+    dragmode=False,
+    margin={"r":0,"t":30,"l":0,"b":0},
+)
+
+fig.show()
+```
+
+# **Trends in C-section rates and birth time**
+
+The trend line chart shows how birth rates and C-section rates have evolved over time.
+Birth rates in developed countries are falling steadily, likely due to urbanization, career aspirations, and improved healthcare.
+C-section rates are increasing everywhere, especially among middle-to-high-income countries, perhaps due to convenience, medical advances, or policy shifts.
+Some developing nations show a reversed trend-rising birth rates but level or declining C-section rates-indicating inequalities in access to healthcare interventions.
+Wider medical access around the world is suggested by the increasing incidence of C-sections, yet in lower Income countries, restricted access to safe birth remains a problem.
+
+```{python}
+import pandas as pd
+import plotly.graph_objects as go
+
+# Step 1: Load the datasets
+indicator = pd.read_csv('unicef_indicator_2_final_alpha3.csv')
+metadata = pd.read_csv('unicef_metadata2.csv')
+
+# Step 2: Clean column names
+indicator.columns = indicator.columns.str.strip()
+metadata.columns = metadata.columns.str.strip()
+
+# Step 3: Merge on 'Country' and 'Year'
+merged = pd.merge(indicator, metadata, on=['Country', 'Year'], how='inner')
+
+# Step 4: Group by Year
+trend_data = merged.groupby('Year').agg({
+    'C Section %': 'mean',
+    'Birth Rate': 'mean'
+}).reset_index()
+
+# Step 5: Plotting using Plotly
+fig = go.Figure()
+
+# Add C Section % Line
+fig.add_trace(go.Scatter(
+    x=trend_data['Year'],
+    y=trend_data['C Section %'],
+    name='C Section %',
+    mode='lines+markers',
+    line=dict(color='blue', width=3),
+    hovertemplate='Year: %{x}<br>C Section: %{y:.2f}%'
+))
+
+# Add Birth Rate Line
+fig.add_trace(go.Scatter(
+    x=trend_data['Year'],
+    y=trend_data['Birth Rate'],
+    name='Birth Rate',
+    mode='lines+markers',
+    line=dict(color='green', width=3, dash='dash'),
+    yaxis='y2',
+    hovertemplate='Year: %{x}<br>Birth Rate: %{y:.2f}'
+))
+
+# Layout settings
+fig.update_layout(
+    title='Trends in C-section Rates and Birth Rates Over Time',
+    xaxis=dict(title='Year'),
+    yaxis=dict(
+        title=dict(text='C Section %', font=dict(color='blue')),
+        tickfont=dict(color='blue')
+    ),
+    yaxis2=dict(
+        title=dict(text='Birth Rate', font=dict(color='green')),
+        tickfont=dict(color='green'),
+        overlaying='y',
+        side='right'
+    ),
+    legend=dict(x=0.01, y=0.99),
+    hovermode='x unified',
+    width=1000,
+    height=600,
+    margin=dict(l=50, r=50, t=80, b=50),
+    plot_bgcolor='white'
+)
+
+fig.show()
+```
+
+
+# **Comparison between Total Population and the Availability of the Hospital Beds per 1000**
+
+The bar charts compare hospital bed availability and population sizes of different countries Nation states that have high population densities but fewer hospital beds (ie., India, Nigeria) can experience. shortages of maternal healthcare, including high risk pregnancies and high infant mortality rates.
+Country states with a greater number of hospital beds available per capita (ie., Japan, Germany) have better maternal healthcare outcomes.
+Overburdened health systems of high-density countries need prompt policy actions to improve maternal health. services.
+
+
+```{python}
+import pandas as pd
+import plotly.express as px
+
+# Step 1: Load the metadata
+metadata = pd.read_csv('unicef_metadata2.csv')
+
+# Step 2: Clean column names
+metadata.columns = metadata.columns.str.strip()
+
+# Step 3: Select necessary columns with corrected names
+selected = metadata[['Country', 'Population Total', 'Hospital beds (per 1,000 people)']]
+
+# Step 4: Drop missing values
+selected = selected.dropna()
+
+# Step 5: Aggregate if needed (max population, mean hospital beds)
+selected = selected.groupby('Country').agg({
+    'Population Total': 'max',
+    'Hospital beds (per 1,000 people)': 'mean'
+}).reset_index()
+
+# Step 6: Sort and take top 50
+top_50 = selected.sort_values('Population Total', ascending=False).head(50)
+
+# Step 7: Plot using Plotly
+fig = px.bar(
+    top_50,
+    x='Hospital beds (per 1,000 people)',
+    y='Country',
+    orientation='h',
+    hover_data={
+        'Country': True,
+        'Hospital beds (per 1,000 people)': True,
+        'Population Total': True
+    },
+    title='Comparison between Total Population and Availability of Hospital Beds per 1000 (Top 50 Countries)',
+    labels={'Hospital beds (per 1,000 people)': 'Hospital Beds per 1000 People'}
+)
+
+# Step 8: Beautify
+fig.update_layout(
+    yaxis={'categoryorder': 'total ascending'},
+    height=1600,  # Enough height for 50 countries
+    xaxis_title="Hospital Beds per 1000 People",
+    yaxis_title="Country",
+    margin=dict(l=150, r=50, t=80, b=50),
+)
+
+fig.show()
+```
+
+# **Total hospital beds per 1000 against the birth rate and population across countries**
+
+This graph illustrates the interplay of birth rates, hospital bed supply, and population size by nation. Nations with greater numbers of hospital beds per 1,000 residents have lower birth rates, a mirror of better health and availability of family planning.
+Nations with scarce hospital bed availability but excess birth rates suffer from healthcare system overload, exposing greater risk for maternal and neonatal morbidity. Healthcare facilities directly impact maternal healthcare outcomes, so there must be good medical centers where high birth rate locations are located.
+
+```{python}
+import pandas as pd
+import plotly.express as px
+
+# Step 1: Load the metadata
+metadata = pd.read_csv('unicef_metadata2.csv')
+
+# Step 2: Clean column names
+metadata.columns = metadata.columns.str.strip()
+
+# Step 3: Select necessary columns
+selected = metadata[['Country', 'Population Total', 'Hospital beds (per 1,000 people)', 'Birth Rate']]
+
+# Step 4: Drop missing values
+selected = selected.dropna()
+
+# Step 5: Create Bubble Plot
+fig = px.scatter(
+    selected,
+    x='Birth Rate',
+    y='Hospital beds (per 1,000 people)',
+    size='Population Total',
+    color_discrete_sequence=['#FFA500'],  # ORANGE color (fixed) 🔥
+    hover_name='Country',
+    size_max=60,
+    title='Total hospital beds per 1000 against the birth rate and population across countries',
+    labels={
+        'Birth Rate': 'Birth rate, crude (per 1,000 people)',
+        'Hospital beds (per 1,000 people)': 'Hospital beds (per 1,000 people)',
+        'Population Total': 'Population Total'
+    }
+)
+
+# Step 6: Beautify
+fig.update_layout(
+    xaxis_title="Birth rate, crude (per 1,000 people)",
+    yaxis_title="Hospital beds (per 1,000 people)",
+    margin=dict(l=50, r=50, t=80, b=50),
+    height=700,
+    plot_bgcolor='#EAF2F8',  # Light blueish background
+)
+
+fig.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))  # Bubble outlines dark
+
+fig.show()
+```
+
+**Conclusion** 
+
+To conclude, this dashboard showcases a clear correlation between medical infrastructure, birth rates and maternal health outcomes.
+Most strained are the nations with low medical accessibilities and
+high in population. 
+
+**For better outcomes:** 
+
+- 🌍 Increase medical accessibility in low income countries through
+investments in infrastructure.
+- 📊 Advertise safe delivery practices to ensure a balance between
+natural births and C sections.
+- 📈 Enhance family planning programs to offer mothers additional
+health choices.
+- 🔵 By bridging the gap in health care across the globe, we can ensure that mothers and infants have a healthier and safer tomorrow.
+
+
