@@ -1,13 +1,17 @@
 ---
 title: "UNICEF Report"
-# Global Maternal Health: Birth Rates, C-Sections & Healthcare Infrastructure
 format:
   html:
     embed-resources: true
     code-fold: true
 ---
 
-# **An analysis of C-section rates, birth trends, and healthcare infrastructure across countries**
+# **Global Maternal Health: Birth Rates, C-Sections & Healthcare Infrastructure**
+
+***Student Name*** - Sakshi Kaushikbhai Bhavsar  
+***Student ID*** - A00046734
+
+## An analysis of C-section rates, birth trends, and healthcare infrastructure across countries
 
 The world map shows the birth rate per 1000 individuals land C-section rate for various nations.
 Countries with higher C-section rates (e.g., Brazil, China, USA) mirror higher medical interventions, often a result of private health care incentives or medical policy. Regions with lower C-section rates but high birth rates (e.g., some parts of Africa) may have limited medical access and thus greater maternal and infant mortality risks. The international disparity of the C-section rate indicates that access to health, cultural values and health policies have a deep impact on decisions in maternal care.
@@ -76,7 +80,7 @@ fig.update_layout(
 fig.show()
 ```
 
-# **Trends in C-section rates and birth time**
+## Trends in C-section rates and birth time
 
 The trend line chart shows how birth rates and C-section rates have evolved over time.
 Birth rates in developed countries are falling steadily, likely due to urbanization, career aspirations, and improved healthcare.
@@ -155,7 +159,7 @@ fig.show()
 ```
 
 
-# **Comparison between Total Population and the Availability of the Hospital Beds per 1000**
+## Comparison between Total Population and the Availability of the Hospital Beds per 1000
 
 The bar charts compare hospital bed availability and population sizes of different countries Nation states that have high population densities but fewer hospital beds (ie., India, Nigeria) can experience. shortages of maternal healthcare, including high risk pregnancies and high infant mortality rates.
 Country states with a greater number of hospital beds available per capita (ie., Japan, Germany) have better maternal healthcare outcomes.
@@ -214,7 +218,7 @@ fig.update_layout(
 fig.show()
 ```
 
-# **Total hospital beds per 1000 against the birth rate and population across countries**
+## Total hospital beds per 1000 against the birth rate and population across countries
 
 This graph illustrates the interplay of birth rates, hospital bed supply, and population size by nation. Nations with greater numbers of hospital beds per 1,000 residents have lower birth rates, a mirror of better health and availability of family planning.
 Nations with scarce hospital bed availability but excess birth rates suffer from healthcare system overload, exposing greater risk for maternal and neonatal morbidity. Healthcare facilities directly impact maternal healthcare outcomes, so there must be good medical centers where high birth rate locations are located.
@@ -235,13 +239,13 @@ selected = metadata[['Country', 'Population Total', 'Hospital beds (per 1,000 pe
 # Step 4: Drop missing values
 selected = selected.dropna()
 
-# Step 5: Create Bubble Plot
+# Create the scatter plot
 fig = px.scatter(
     selected,
     x='Birth Rate',
     y='Hospital beds (per 1,000 people)',
     size='Population Total',
-    color_discrete_sequence=['#FFA500'],  # ORANGE color (fixed) 🔥
+    color_discrete_sequence=['#FFA500'],  # ORANGE color 🔥
     hover_name='Country',
     size_max=60,
     title='Total hospital beds per 1000 against the birth rate and population across countries',
@@ -249,37 +253,37 @@ fig = px.scatter(
         'Birth Rate': 'Birth rate, crude (per 1,000 people)',
         'Hospital beds (per 1,000 people)': 'Hospital beds (per 1,000 people)',
         'Population Total': 'Population Total'
-    }
+    },
+    trendline="ols"  # Regression line 📈
 )
 
-# Step 6: Beautify
+# Change regression line color here 👇
+fig.update_traces(selector=dict(mode='lines'), line=dict(color='red'))
+
+# Beautify
 fig.update_layout(
     xaxis_title="Birth rate, crude (per 1,000 people)",
     yaxis_title="Hospital beds (per 1,000 people)",
     margin=dict(l=50, r=50, t=80, b=50),
     height=700,
-    plot_bgcolor='#EAF2F8',  # Light blueish background
+    plot_bgcolor='#EAF2F8',
 )
 
-fig.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))  # Bubble outlines dark
+fig.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 
 fig.show()
 ```
 
-**Conclusion** 
+## Conclusion
 
 To conclude, this dashboard showcases a clear correlation between medical infrastructure, birth rates and maternal health outcomes.
-Most strained are the nations with low medical accessibilities and
-high in population. 
+Most strained are the nations with low medical accessibilities and high in population. 
 
-**For better outcomes:** 
+*For better outcomes:*
 
-- 🌍 Increase medical accessibility in low income countries through
-investments in infrastructure.
-- 📊 Advertise safe delivery practices to ensure a balance between
-natural births and C sections.
-- 📈 Enhance family planning programs to offer mothers additional
-health choices.
-- 🔵 By bridging the gap in health care across the globe, we can ensure that mothers and infants have a healthier and safer tomorrow.
+- Increase medical accessibility in low income countries through investments in infrastructure.
+- Advertise safe delivery practices to ensure a balance betweennatural births and C sections.
+- Enhance family planning programs to offer mothers additional health choices.
+- By bridging the gap in health care across the globe, we can ensure that mothers and infants have a healthier and safer tomorrow.
 
 
